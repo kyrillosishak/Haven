@@ -58,33 +58,33 @@ console.log(results);
 
 ## Features
 
-- 🔍 **Vector Search**: Store and search 100K+ documents with semantic understanding
-- 🧠 **Local Embeddings**: Transformers.js integration with WebGPU acceleration
-- 💬 **Private RAG**: Complete retrieval-augmented generation pipeline
-- 🤖 **Dual LLM Support**: WebLLM (WebGPU) + Wllama (WASM) with automatic fallback
-- 🔌 **MCP Integration**: Works with Claude Desktop and AI agent ecosystems
-- 📦 **Easy Integration**: Clean TypeScript API with full type safety
+- **Vector Search**: Store and search 100K+ documents with semantic understanding
+- **Local Embeddings**: Transformers.js integration with WebGPU acceleration
+- **Private RAG**: Complete retrieval-augmented generation pipeline
+- **Dual LLM Support**: WebLLM (WebGPU) + Wllama (WASM) with automatic fallback
+- **MCP Integration**: Works with Claude Desktop and AI agent ecosystems
+- **Easy Integration**: Clean TypeScript API with full type safety
 
 ## Use Cases
 
-✅ **Privacy-Critical Applications**
+**Privacy-Critical Applications**
 - Legal tech, healthcare, finance
 - GDPR-compliant by design
 - Attorney-client privilege protection
 
-✅ **Offline-First Apps**
+**Offline-First Apps**
 - Browser extensions
 - Electron applications
 - Progressive web apps
 
-✅ **Cost-Sensitive Projects**
+**Cost-Sensitive Projects**
 - Zero cloud infrastructure costs
 - No API rate limits
 - Unlimited usage
 
 ## Core Features
 
-### 🔍 Vector Search
+### Vector Search
 ```typescript
 // Semantic search with metadata filtering
 const results = await db.search({
@@ -94,7 +94,7 @@ const results = await db.search({
 });
 ```
 
-### 💬 RAG Pipeline
+### RAG Pipeline
 ```typescript
 import { RAGPipelineManager, WllamaProvider } from 'haven';
 
@@ -112,7 +112,7 @@ console.log(result.answer);
 console.log(result.sources); // Citations
 ```
 
-### 🤖 MCP Integration
+### MCP Integration
 ```typescript
 import { MCPServer } from 'haven';
 
