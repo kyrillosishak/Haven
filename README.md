@@ -1,11 +1,11 @@
 <div align="center">
 
-<h1 style="font-size: 5em; margin: 0.6em 1;">
-  <img src="./assets/logo.png" alt="Haven Logo" height="120" style="vertical-align: middle; margin-right: -20px;"/>
-  Haven
+<br>
+
+<h1>
+  <img src="/Users/kyrillos/Documents/GitHub/Haven/assets/Frame 1.png" alt="Haven Logo" height="200" align="center"/>
 </h1>
 
-<br>
 
 **Your Private AI Stack**
 
