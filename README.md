@@ -1,6 +1,9 @@
 <div align="center">
 
-# Haven
+<h1>
+  <img src="./assets/logo.png" alt="Haven Logo" height="60" align="center"/>
+  Haven
+</h1>
 
 **Your Private AI Stack**
 
