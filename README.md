@@ -3,7 +3,7 @@
 <br>
 
 <h1>
-  <img src="/Users/kyrillos/Documents/GitHub/Haven/assets/Frame 1.png" alt="Haven Logo" height="200" align="center"/>
+  <img src="./assets/Frame 1.png" alt="Haven Logo" height="200" align="center"/>
 </h1>
 
 
