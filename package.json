@@ -1,0 +1,89 @@
+{
+  "name": "haven",
+  "version": "0.1.0",
+  "description": "Your Private AI Stack - Vector database + RAG + LLM, all in the browser",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "test": "vitest run --exclude '**/*.integration.test.ts'",
+    "test:unit": "vitest run --exclude '**/*.integration.test.ts'",
+    "test:integration": "vitest run src/**/*.integration.test.ts",
+    "test:watch": "vitest --exclude '**/*.integration.test.ts'",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage --exclude '**/*.integration.test.ts'",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts,.tsx",
+    "example:basic": "node dist/examples/basic-usage.js",
+    "example:embedding": "node dist/examples/embedding-usage.js",
+    "example:index": "node dist/examples/index-manager-usage.js",
+    "example:rag": "node dist/examples/rag-usage.js",
+    "example:llm": "node dist/examples/llm-usage.js",
+    "example:webllm": "node dist/examples/webllm-usage.js",
+    "example:mcp": "node dist/examples/mcp-usage.js",
+    "example:mcp-server": "node dist/examples/mcp-server-standalone.js",
+    "example:performance": "node dist/examples/performance-usage.js",
+    "example:multimodal": "node dist/examples/multimodal-search.js",
+    "example:document-qa": "node dist/examples/document-qa.js",
+    "examples:serve": "npx serve examples"
+  },
+  "keywords": [
+    "vector-database",
+    "embeddings",
+    "semantic-search",
+    "rag",
+    "llm",
+    "privacy",
+    "local-ai",
+    "browser",
+    "offline",
+    "wasm",
+    "webgpu",
+    "mcp",
+    "transformers"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@huggingface/transformers": "^3.1.2",
+    "@mlc-ai/web-llm": "^0.2.72",
+    "voy-search": "^0.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@typescript-eslint/eslint-plugin": "^8.18.1",
+    "@typescript-eslint/parser": "^8.18.1",
+    "@vitest/ui": "^2.1.8",
+    "@wllama/wllama": "^2.3.6",
+    "eslint": "^9.17.0",
+    "fake-indexeddb": "^6.0.0",
+    "happy-dom": "^15.11.7",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3",
+    "vite-plugin-dts": "^4.3.0",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.3.0",
+    "vitest": "^2.1.8"
+  },
+  "peerDependencies": {
+    "@wllama/wllama": "^1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@wllama/wllama": {
+      "optional": true
+    }
+  }
+}

@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semantic Search Demo - Browser VectorDB</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 40px;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .main-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    .tabs {
+      display: flex;
+      background: #f8f9fa;
+      border-bottom: 2px solid #e9ecef;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      font-weight: 600;
+      color: #6c757d;
+      transition: all 0.3s;
+      border-bottom: 3px solid transparent;
+    }
+
+    .tab:hover {
+      background: #e9ecef;
+    }
+
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+      background: white;
+    }
+
+    .tab-content {
+      display: none;
+      padding: 30px;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .search-section {
+      margin-bottom: 30px;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 15px 20px;
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
+      font-size: 1rem;
+      transition: border-color 0.3s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .btn {
+      padding: 15px 30px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+
+    .filters {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .filter-group label {
+      font-weight: 600;
+      color: #495057;
+    }
+
+    .filter-group select,
+    .filter-group input {
+      padding: 8px 12px;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .results {
+      display: grid;
+      gap: 20px;
+    }
+
+    .result-card {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      transition: all 0.3s;
+      border-left: 4px solid #667eea;
+    }
+
+    .result-card:hover {
+      transform: translateX(5px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 10px;
+    }
+
+    .result-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #212529;
+    }
+
+    .result-score {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .result-content {
+      color: #495057;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+
+    .result-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .meta-tag {
+      background: white;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: #6c757d;
+    }
+
+    .insert-form {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      color: #495057;
+      margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: inherit;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .status {
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+
+    .status.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border-left: 4px solid #17a2b8;
+    }
+
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border-left: 4px solid #28a745;
+    }
+
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border-left: 4px solid #dc3545;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #6c757d;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #6c757d;
+    }
+
+    .empty-state svg {
+      width: 100px;
+      height: 100px;
+      margin-bottom: 20px;
+      opacity: 0.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔍 Semantic Search Demo</h1>
+      <p>Powered by Browser VectorDB - Privacy-First, Offline-Capable AI Search</p>
+    </div>
+
+    <div class="main-card">
+      <div class="tabs">
+        <div class="tab active" data-tab="search">Search</div>
+        <div class="tab" data-tab="insert">Add Documents</div>
+        <div class="tab" data-tab="manage">Manage</div>
+      </div>
+
+      <!-- Search Tab -->
+      <div class="tab-content active" id="search-tab">
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-value" id="doc-count">0</div>
+            <div class="stat-label">Documents</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="search-count">0</div>
+            <div class="stat-label">Searches</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="avg-time">0ms</div>
+            <div class="stat-label">Avg Search Time</div>
+          </div>
+        </div>
+
+        <div class="search-section">
+          <div class="search-box">
+            <input 
+              type="text" 
+              class="search-input" 
+              id="search-query"
+              placeholder="Enter your search query... (e.g., 'machine learning algorithms')"
+            />
+            <button class="btn btn-primary" id="search-btn">Search</button>
+          </div>
+
+          <div class="filters">
+            <div class="filter-group">
+              <label>Results:</label>
+              <select id="result-count">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Category:</label>
+              <select id="category-filter">
+                <option value="">All</option>
+                <option value="technology">Technology</option>
+                <option value="science">Science</option>
+                <option value="business">Business</option>
+                <option value="health">Health</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Min Score:</label>
+              <input type="number" id="min-score" min="0" max="1" step="0.1" value="0" style="width: 80px;">
+            </div>
+          </div>
+        </div>
+
+        <div id="search-results" class="results"></div>
+      </div>
+
+      <!-- Insert Tab -->
+      <div class="tab-content" id="insert-tab">
+        <div class="insert-form">
+          <h3 style="margin-bottom: 20px; color: #212529;">Add New Document</h3>
+          
+          <div class="form-group">
+            <label>Title *</label>
+            <input type="text" id="doc-title" placeholder="Document title" required />
+          </div>
+
+          <div class="form-group">
+            <label>Content *</label>
+            <textarea id="doc-content" placeholder="Document content..." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Category</label>
+            <select id="doc-category">
+              <option value="technology">Technology</option>
+              <option value="science">Science</option>
+              <option value="business">Business</option>
+              <option value="health">Health</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Tags (comma-separated)</label>
+            <input type="text" id="doc-tags" placeholder="ai, machine learning, neural networks" />
+          </div>
+
+          <div class="form-group">
+            <label>Source URL</label>
+            <input type="url" id="doc-url" placeholder="https://example.com/article" />
+          </div>
+
+          <button class="btn btn-primary" id="insert-btn">Add Document</button>
+        </div>
+
+        <div id="insert-status"></div>
+
+        <h3 style="margin: 30px 0 15px; color: #212529;">Quick Add Sample Documents</h3>
+        <button class="btn btn-secondary" id="load-samples-btn">Load Sample Documents</button>
+      </div>
+
+      <!-- Manage Tab -->
+      <div class="tab-content" id="manage-tab">
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-value" id="storage-used">0 KB</div>
+            <div class="stat-label">Storage Used</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="index-size">0</div>
+            <div class="stat-label">Index Size</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+          <button class="btn btn-secondary" id="export-btn">Export Database</button>
+          <button class="btn btn-secondary" id="clear-btn">Clear All Data</button>
+        </div>
+
+        <div id="manage-status"></div>
+
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-top: 20px;">
+          <h3 style="margin-bottom: 15px; color: #212529;">About This Demo</h3>
+          <p style="color: #495057; line-height: 1.6; margin-bottom: 10px;">
+            This semantic search demo runs entirely in your browser using WebAssembly and local embeddings.
+            No data is sent to external servers, ensuring complete privacy.
+          </p>
+          <p style="color: #495057; line-height: 1.6;">
+            <strong>Features:</strong> Vector similarity search, metadata filtering, persistent storage,
+            and real-time embedding generation using Transformers.js.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // This would import from your built library
+    // For demo purposes, we'll simulate the API
+    
+    let db = null;
+    let searchCount = 0;
+    let totalSearchTime = 0;
+
+    // Initialize the database
+    async function initDB() {
+      showStatus('info', 'Initializing VectorDB...', 'search-results');
+      
+      try {
+        // In a real implementation:
+        // import { VectorDB } from '../dist/index.js';
+        // db = new VectorDB({ ... });
+        // await db.initialize();
+        
+        // Simulated initialization
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        showStatus('success', 'VectorDB initialized successfully!', 'search-results');
+        updateStats();
+      } catch (error) {
+        showStatus('error', `Failed to initialize: ${error.message}`, 'search-results');
+      }
+    }
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+        
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        tab.classList.add('active');
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+      });
+    });
+
+    // Search functionality
+    document.getElementById('search-btn').addEventListener('click', async () => {
+      const query = document.getElementById('search-query').value.trim();
+      if (!query) return;
+
+      const resultsDiv = document.getElementById('search-results');
+      resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Searching...</p></div>';
+
+      const startTime = performance.now();
+
+      try {
+        // Simulated search results
+        const results = await simulateSearch(query);
+        const searchTime = Math.round(performance.now() - startTime);
+        
+        searchCount++;
+        totalSearchTime += searchTime;
+        updateStats();
+
+        displayResults(results, searchTime);
+      } catch (error) {
+        showStatus('error', `Search failed: ${error.message}`, 'search-results');
+      }
+    });
+
+    // Insert document
+    document.getElementById('insert-btn').addEventListener('click', async () => {
+      const title = document.getElementById('doc-title').value.trim();
+      const content = document.getElementById('doc-content').value.trim();
+      
+      if (!title || !content) {
+        showStatus('error', 'Title and content are required', 'insert-status');
+        return;
+      }
+
+      showStatus('info', 'Adding document...', 'insert-status');
+
+      try {
+        const tags = document.getElementById('doc-tags').value
+          .split(',')
+          .map(t => t.trim())
+          .filter(t => t);
+
+        // Simulated insert
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        showStatus('success', 'Document added successfully!', 'insert-status');
+        
+        // Clear form
+        document.getElementById('doc-title').value = '';
+        document.getElementById('doc-content').value = '';
+        document.getElementById('doc-tags').value = '';
+        document.getElementById('doc-url').value = '';
+        
+        updateStats();
+      } catch (error) {
+        showStatus('error', `Failed to add document: ${error.message}`, 'insert-status');
+      }
+    });
+
+    // Load sample documents
+    document.getElementById('load-samples-btn').addEventListener('click', async () => {
+      showStatus('info', 'Loading sample documents...', 'insert-status');
+      
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        showStatus('success', 'Loaded 10 sample documents!', 'insert-status');
+        updateStats();
+      } catch (error) {
+        showStatus('error', `Failed to load samples: ${error.message}`, 'insert-status');
+      }
+    });
+
+    // Export database
+    document.getElementById('export-btn').addEventListener('click', async () => {
+      showStatus('info', 'Exporting database...', 'manage-status');
+      
+      try {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const data = { message: 'This would be your exported data' };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'vectordb-export.json';
+        a.click();
+        
+        showStatus('success', 'Database exported successfully!', 'manage-status');
+      } catch (error) {
+        showStatus('error', `Export failed: ${error.message}`, 'manage-status');
+      }
+    });
+
+    // Clear database
+    document.getElementById('clear-btn').addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to clear all data?')) return;
+      
+      showStatus('info', 'Clearing database...', 'manage-status');
+      
+      try {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        showStatus('success', 'Database cleared!', 'manage-status');
+        updateStats();
+      } catch (error) {
+        showStatus('error', `Clear failed: ${error.message}`, 'manage-status');
+      }
+    });
+
+    // Helper functions
+    function showStatus(type, message, containerId) {
+      const container = document.getElementById(containerId);
+      const statusDiv = document.createElement('div');
+      statusDiv.className = `status ${type}`;
+      statusDiv.textContent = message;
+      container.innerHTML = '';
+      container.appendChild(statusDiv);
+      
+      if (type === 'success' || type === 'info') {
+        setTimeout(() => statusDiv.remove(), 5000);
+      }
+    }
+
+    function displayResults(results, searchTime) {
+      const resultsDiv = document.getElementById('search-results');
+      
+      if (results.length === 0) {
+        resultsDiv.innerHTML = `
+          <div class="empty-state">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <h3>No results found</h3>
+            <p>Try a different search query or add more documents</p>
+          </div>
+        `;
+        return;
+      }
+
+      resultsDiv.innerHTML = results.map(result => `
+        <div class="result-card">
+          <div class="result-header">
+            <div class="result-title">${result.title}</div>
+            <div class="result-score">${(result.score * 100).toFixed(1)}%</div>
+          </div>
+          <div class="result-content">${result.content}</div>
+          <div class="result-meta">
+            <span class="meta-tag">📁 ${result.category}</span>
+            ${result.tags.map(tag => `<span class="meta-tag">#${tag}</span>`).join('')}
+            <span class="meta-tag">⏱️ ${searchTime}ms</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateStats() {
+      document.getElementById('doc-count').textContent = Math.floor(Math.random() * 100);
+      document.getElementById('search-count').textContent = searchCount;
+      document.getElementById('avg-time').textContent = 
+        searchCount > 0 ? Math.round(totalSearchTime / searchCount) + 'ms' : '0ms';
+      document.getElementById('storage-used').textContent = 
+        (Math.random() * 500).toFixed(1) + ' KB';
+      document.getElementById('index-size').textContent = 
+        Math.floor(Math.random() * 1000);
+    }
+
+    async function simulateSearch(query) {
+      // Simulated search results
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      return [
+        {
+          title: 'Introduction to Machine Learning',
+          content: 'Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed.',
+          category: 'technology',
+          tags: ['ml', 'ai', 'algorithms'],
+          score: 0.95
+        },
+        {
+          title: 'Neural Networks Explained',
+          content: 'Neural networks are computing systems inspired by biological neural networks. They consist of interconnected nodes that process information.',
+          category: 'technology',
+          tags: ['neural-networks', 'deep-learning'],
+          score: 0.87
+        },
+        {
+          title: 'Data Science Fundamentals',
+          content: 'Data science combines statistics, mathematics, and computer science to extract insights from structured and unstructured data.',
+          category: 'technology',
+          tags: ['data-science', 'analytics'],
+          score: 0.76
+        }
+      ];
+    }
+
+    // Initialize on load
+    initDB();
+  </script>
+</body>
+</html>

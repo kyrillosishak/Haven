@@ -1,0 +1,81 @@
+/**
+ * Core configuration types for VectorDB
+ */
+
+export interface StorageConfig {
+  dbName: string;
+  version?: number;
+  maxVectors?: number;
+}
+
+export interface IndexConfig {
+  indexType: 'kdtree' | 'hnsw';
+  dimensions: number;
+  metric: 'cosine' | 'euclidean' | 'dot';
+  parameters?: Record<string, any>;
+}
+
+export interface EmbeddingConfig {
+  model: string;
+  device: 'wasm' | 'webgpu';
+  cache?: boolean;
+}
+
+export interface LLMConfig {
+  provider: 'wllama' | 'webllm';
+  model: string;
+  options?: Record<string, any>;
+}
+
+export interface PerformanceConfig {
+  maxMemoryMB?: number;
+  evictionThreshold?: number;
+  vectorCacheSize?: number;
+  embeddingCacheSize?: number;
+  indexCacheSize?: number;
+  enableWorkers?: boolean;
+  maxWorkers?: number;
+  batchSize?: number;
+  batchWaitTime?: number;
+  chunkSize?: number;
+  lazyLoadIndex?: boolean;
+  lazyLoadModels?: boolean;
+}
+
+export interface VectorDBConfig {
+  storage: StorageConfig;
+  index: IndexConfig;
+  embedding: EmbeddingConfig;
+  llm?: LLMConfig;
+  performance?: PerformanceConfig;
+}
+
+export interface InsertData {
+  vector?: Float32Array;
+  text?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface ExportData {
+  version: string;
+  config: VectorDBConfig;
+  vectors: any[];
+  index: string;
+  metadata: {
+    exportedAt: number;
+    vectorCount: number;
+    dimensions: number;
+  };
+}
+
+export interface ExportOptions {
+  includeIndex?: boolean;
+  format?: 'json' | 'binary';
+  onProgress?: (loaded: number, total: number) => void;
+}
+
+export interface ImportOptions {
+  validateSchema?: boolean;
+  onProgress?: (loaded: number, total: number) => void;
+  clearExisting?: boolean;
+}

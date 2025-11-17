@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAG Chatbot Demo - Browser VectorDB</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 900px;
+      height: 90vh;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 25px;
+      text-align: center;
+    }
+
+    .chat-header h1 {
+      font-size: 1.8rem;
+      margin-bottom: 5px;
+    }
+
+    .chat-header p {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .chat-status {
+      background: #f8f9fa;
+      padding: 12px 25px;
+      border-bottom: 1px solid #e9ecef;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #28a745;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 25px;
+      background: #f8f9fa;
+    }
+
+    .message {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 12px;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.user {
+      flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .message.user .message-avatar {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .message.assistant .message-avatar {
+      background: #6c757d;
+    }
+
+    .message-content {
+      max-width: 70%;
+      background: white;
+      padding: 15px 18px;
+      border-radius: 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .message.user .message-content {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .message-text {
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+
+    .message-sources {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #e9ecef;
+      font-size: 0.85rem;
+    }
+
+    .message.user .message-sources {
+      border-top-color: rgba(255,255,255,0.3);
+    }
+
+    .source-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+      padding: 6px 10px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      color: #495057;
+    }
+
+    .message.user .source-item {
+      background: rgba(255,255,255,0.2);
+      color: white;
+    }
+
+    .message-time {
+      font-size: 0.75rem;
+      color: #6c757d;
+      margin-top: 6px;
+    }
+
+    .message.user .message-time {
+      color: rgba(255,255,255,0.8);
+    }
+
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 15px 18px;
+    }
+
+    .typing-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #6c757d;
+      animation: typing 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+      0%, 60%, 100% {
+        transform: translateY(0);
+      }
+      30% {
+        transform: translateY(-10px);
+      }
+    }
+
+    .chat-input-container {
+      padding: 20px 25px;
+      background: white;
+      border-top: 1px solid #e9ecef;
+    }
+
+    .chat-input-wrapper {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .chat-input {
+      flex: 1;
+      padding: 15px 18px;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      resize: none;
+      max-height: 120px;
+      transition: border-color 0.3s;
+    }
+
+    .chat-input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .send-button {
+      width: 50px;
+      height: 50px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-size: 1.3rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+
+    .send-button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    .send-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .quick-action {
+      padding: 8px 14px;
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .quick-action:hover {
+      background: #e9ecef;
+      border-color: #667eea;
+      color: #667eea;
+    }
+
+    .welcome-message {
+      text-align: center;
+      padding: 60px 20px;
+      color: #6c757d;
+    }
+
+    .welcome-message h2 {
+      color: #212529;
+      margin-bottom: 15px;
+    }
+
+    .welcome-message p {
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+
+    .example-queries {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-top: 30px;
+    }
+
+    .example-query {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 2px solid #e9ecef;
+    }
+
+    .example-query:hover {
+      border-color: #667eea;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .example-query-title {
+      font-weight: 600;
+      color: #212529;
+      margin-bottom: 8px;
+    }
+
+    .example-query-text {
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+
+    .settings-panel {
+      background: #f8f9fa;
+      padding: 15px 25px;
+      border-bottom: 1px solid #e9ecef;
+      display: none;
+    }
+
+    .settings-panel.active {
+      display: block;
+    }
+
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .setting-item label {
+      font-size: 0.9rem;
+      color: #495057;
+    }
+
+    .setting-item input,
+    .setting-item select {
+      padding: 6px 10px;
+      border: 1px solid #e9ecef;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <h1>🤖 RAG Chatbot</h1>
+      <p>Ask questions about your documents - Powered by local AI</p>
+    </div>
+
+    <div class="chat-status">
+      <div class="status-indicator">
+        <div class="status-dot"></div>
+        <span>Ready</span>
+      </div>
+      <div>
+        <span id="doc-count">0 documents</span> • 
+        <span id="model-status">Model loaded</span>
+      </div>
+    </div>
+
+    <div class="settings-panel" id="settings-panel">
+      <div class="setting-item">
+        <label>Temperature:</label>
+        <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7" />
+        <span id="temp-value">0.7</span>
+      </div>
+      <div class="setting-item">
+        <label>Max Tokens:</label>
+        <input type="number" id="max-tokens" min="50" max="500" value="200" />
+      </div>
+      <div class="setting-item">
+        <label>Top K Results:</label>
+        <input type="number" id="top-k" min="1" max="10" value="3" />
+      </div>
+    </div>
+
+    <div class="chat-messages" id="chat-messages">
+      <div class="welcome-message">
+        <h2>👋 Welcome to RAG Chatbot!</h2>
+        <p>
+          I can answer questions based on your documents using retrieval-augmented generation.
+          All processing happens locally in your browser for complete privacy.
+        </p>
+        <p style="font-size: 0.9rem; color: #6c757d;">
+          Try asking me something, or click one of the examples below:
+        </p>
+        <div class="example-queries">
+          <div class="example-query" data-query="What is machine learning?">
+            <div class="example-query-title">💡 Explain Concepts</div>
+            <div class="example-query-text">What is machine learning?</div>
+          </div>
+          <div class="example-query" data-query="Summarize the key points about neural networks">
+            <div class="example-query-title">📝 Summarize</div>
+            <div class="example-query-text">Summarize key points about neural networks</div>
+          </div>
+          <div class="example-query" data-query="Compare different AI approaches">
+            <div class="example-query-title">⚖️ Compare</div>
+            <div class="example-query-text">Compare different AI approaches</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-input-container">
+      <div class="quick-actions">
+        <button class="quick-action" onclick="toggleSettings()">⚙️ Settings</button>
+        <button class="quick-action" onclick="clearChat()">🗑️ Clear Chat</button>
+        <button class="quick-action" onclick="exportChat()">💾 Export</button>
+      </div>
+      <div class="chat-input-wrapper">
+        <textarea 
+          class="chat-input" 
+          id="user-input" 
+          placeholder="Ask a question about your documents..."
+          rows="1"
+        ></textarea>
+        <button class="send-button" id="send-button" onclick="sendMessage()">
+          ➤
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    let messages = [];
+    let isProcessing = false;
+
+    // Auto-resize textarea
+    const textarea = document.getElementById('user-input');
+    textarea.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = this.scrollHeight + 'px';
+    });
+
+    // Send on Enter (Shift+Enter for new line)
+    textarea.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // Example query clicks
+    document.querySelectorAll('.example-query').forEach(el => {
+      el.addEventListener('click', function() {
+        const query = this.dataset.query;
+        document.getElementById('user-input').value = query;
+        sendMessage();
+      });
+    });
+
+    // Temperature slider
+    document.getElementById('temperature').addEventListener('input', function() {
+      document.getElementById('temp-value').textContent = this.value;
+    });
+
+    window.sendMessage = async function() {
+      if (isProcessing) return;
+
+      const input = document.getElementById('user-input');
+      const message = input.value.trim();
+      
+      if (!message) return;
+
+      // Clear welcome message
+      const welcome = document.querySelector('.welcome-message');
+      if (welcome) welcome.remove();
+
+      // Add user message
+      addMessage('user', message);
+      input.value = '';
+      input.style.height = 'auto';
+
+      // Disable input
+      isProcessing = true;
+      document.getElementById('send-button').disabled = true;
+
+      // Show typing indicator
+      const typingId = showTypingIndicator();
+
+      try {
+        // Simulate RAG query
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Remove typing indicator
+        removeTypingIndicator(typingId);
+
+        // Simulated response
+        const response = {
+          answer: `Based on the documents in the knowledge base, ${message.toLowerCase().includes('what') ? 'here\'s what I found' : 'I can provide this information'}: 
+
+Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. It uses algorithms to identify patterns in data and make predictions or decisions.
+
+The key concepts include supervised learning, unsupervised learning, and reinforcement learning. Each approach has different use cases and applications in real-world scenarios.`,
+          sources: [
+            { title: 'Introduction to ML', score: 0.95 },
+            { title: 'AI Fundamentals', score: 0.87 },
+            { title: 'Neural Networks Guide', score: 0.76 }
+          ],
+          metadata: {
+            retrievalTime: 45,
+            generationTime: 1234,
+            tokensGenerated: 87
+          }
+        };
+
+        addMessage('assistant', response.answer, response.sources, response.metadata);
+
+      } catch (error) {
+        removeTypingIndicator(typingId);
+        addMessage('assistant', `Sorry, I encountered an error: ${error.message}`);
+      } finally {
+        isProcessing = false;
+        document.getElementById('send-button').disabled = false;
+      }
+    };
+
+    function addMessage(role, text, sources = null, metadata = null) {
+      const messagesDiv = document.getElementById('chat-messages');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${role}`;
+
+      const avatar = role === 'user' ? '👤' : '🤖';
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      let sourcesHTML = '';
+      if (sources && sources.length > 0) {
+        sourcesHTML = `
+          <div class="message-sources">
+            <strong>📚 Sources:</strong>
+            ${sources.map(s => `
+              <div class="source-item">
+                <span>${s.title}</span>
+                <span style="margin-left: auto; font-weight: 600;">${(s.score * 100).toFixed(0)}%</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      let metadataHTML = '';
+      if (metadata) {
+        metadataHTML = `
+          <div class="message-time">
+            ⚡ ${metadata.retrievalTime}ms retrieval • 
+            🧠 ${metadata.generationTime}ms generation • 
+            📝 ${metadata.tokensGenerated} tokens
+          </div>
+        `;
+      }
+
+      messageDiv.innerHTML = `
+        <div class="message-avatar">${avatar}</div>
+        <div class="message-content">
+          <div class="message-text">${text}</div>
+          ${sourcesHTML}
+          <div class="message-time">${time}${metadataHTML ? ' • ' + metadataHTML : ''}</div>
+        </div>
+      `;
+
+      messagesDiv.appendChild(messageDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+      messages.push({ role, text, sources, metadata, time });
+    }
+
+    function showTypingIndicator() {
+      const messagesDiv = document.getElementById('chat-messages');
+      const typingDiv = document.createElement('div');
+      const id = 'typing-' + Date.now();
+      typingDiv.id = id;
+      typingDiv.className = 'message assistant';
+      typingDiv.innerHTML = `
+        <div class="message-avatar">🤖</div>
+        <div class="message-content">
+          <div class="typing-indicator">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        </div>
+      `;
+      messagesDiv.appendChild(typingDiv);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      return id;
+    }
+
+    function removeTypingIndicator(id) {
+      const typingDiv = document.getElementById(id);
+      if (typingDiv) typingDiv.remove();
+    }
+
+    window.toggleSettings = function() {
+      const panel = document.getElementById('settings-panel');
+      panel.classList.toggle('active');
+    };
+
+    window.clearChat = function() {
+      if (confirm('Clear all messages?')) {
+        messages = [];
+        document.getElementById('chat-messages').innerHTML = `
+          <div class="welcome-message">
+            <h2>👋 Chat Cleared!</h2>
+            <p>Start a new conversation by asking a question.</p>
+          </div>
+        `;
+      }
+    };
+
+    window.exportChat = function() {
+      const data = {
+        messages,
+        exportedAt: new Date().toISOString()
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'chat-export.json';
+      a.click();
+    };
+
+    // Initialize
+    document.getElementById('doc-count').textContent = '15 documents';
+  </script>
+</body>
+</html>

@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VectorDB Benchmark - Simple Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2em;
+      margin-bottom: 10px;
+    }
+
+    .content {
+      padding: 30px;
+    }
+
+    .info-box {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .info-box h2 {
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #dee2e6;
+    }
+
+    .info-item:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      font-weight: 600;
+      color: #555;
+    }
+
+    .info-value {
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      transition: all 0.3s ease;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .results {
+      margin-top: 20px;
+      display: none;
+    }
+
+    .results.active {
+      display: block;
+    }
+
+    .result-card {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      border-left: 4px solid #667eea;
+    }
+
+    .result-card h3 {
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .result-card p {
+      color: #666;
+      font-size: 0.9em;
+      margin-bottom: 10px;
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      font-size: 0.9em;
+    }
+
+    .status {
+      padding: 10px;
+      border-radius: 4px;
+      margin: 10px 0;
+      display: none;
+    }
+
+    .status.active {
+      display: block;
+    }
+
+    .status.info {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    code {
+      background: #f8f9fa;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚀 VectorDB Benchmark</h1>
+      <p>Simple Performance Testing Demo</p>
+      <p style="font-size: 0.9em; opacity: 0.9; margin-top: 10px;">
+        Tests basic JavaScript operations (arrays, objects, IndexedDB) to verify browser performance
+      </p>
+    </div>
+
+    <div class="content">
+      <div class="info-box">
+        <h2>Environment Information</h2>
+        <div id="envInfo">Loading...</div>
+      </div>
+
+      <div class="status info active" id="status">
+        Click "Run Simple Benchmark" to test basic performance metrics
+      </div>
+
+      <button id="runBtn">Run Simple Benchmark</button>
+
+      <div class="results" id="results"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Simple benchmark without requiring full VectorDB
+    const runBtn = document.getElementById('runBtn');
+    const status = document.getElementById('status');
+    const results = document.getElementById('results');
+    const envInfo = document.getElementById('envInfo');
+
+    // Detect environment
+    function detectEnvironment() {
+      const ua = navigator.userAgent;
+      let browser = 'Unknown';
+      let browserVersion = 'Unknown';
+
+      if (ua.includes('Chrome') && !ua.includes('Edg')) {
+        browser = 'Chrome';
+        const match = ua.match(/Chrome\/(\d+)/);
+        browserVersion = match ? match[1] : 'Unknown';
+      } else if (ua.includes('Firefox')) {
+        browser = 'Firefox';
+        const match = ua.match(/Firefox\/(\d+)/);
+        browserVersion = match ? match[1] : 'Unknown';
+      } else if (ua.includes('Safari') && !ua.includes('Chrome')) {
+        browser = 'Safari';
+        const match = ua.match(/Version\/(\d+)/);
+        browserVersion = match ? match[1] : 'Unknown';
+      } else if (ua.includes('Edg')) {
+        browser = 'Edge';
+        const match = ua.match(/Edg\/(\d+)/);
+        browserVersion = match ? match[1] : 'Unknown';
+      }
+
+      return {
+        browser,
+        browserVersion,
+        platform: navigator.platform,
+        cores: navigator.hardwareConcurrency || 'Unknown',
+        memory: navigator.deviceMemory ? `${navigator.deviceMemory} GB` : 'Unknown',
+      };
+    }
+
+    // Display environment
+    const env = detectEnvironment();
+    envInfo.innerHTML = `
+      <div class="info-item">
+        <span class="info-label">Browser:</span>
+        <span class="info-value">${env.browser} ${env.browserVersion}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Platform:</span>
+        <span class="info-value">${env.platform}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">CPU Cores:</span>
+        <span class="info-value">${env.cores}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Device Memory:</span>
+        <span class="info-value">${env.memory}</span>
+      </div>
+    `;
+
+    // Simple benchmark functions
+    async function benchmarkArrayOperations() {
+      const iterations = 1000;
+      const durations = [];
+
+      for (let i = 0; i < iterations; i++) {
+        const start = performance.now();
+        const arr = new Array(1000).fill(0).map((_, i) => i * 2);
+        const sum = arr.reduce((a, b) => a + b, 0);
+        const end = performance.now();
+        durations.push(end - start);
+      }
+
+      return {
+        mean: durations.reduce((a, b) => a + b, 0) / durations.length,
+        min: Math.min(...durations),
+        max: Math.max(...durations),
+      };
+    }
+
+    async function benchmarkObjectCreation() {
+      const iterations = 1000;
+      const durations = [];
+
+      for (let i = 0; i < iterations; i++) {
+        const start = performance.now();
+        const objects = Array.from({ length: 100 }, (_, i) => ({
+          id: `obj-${i}`,
+          value: Math.random(),
+          nested: { data: i * 2 },
+        }));
+        const end = performance.now();
+        durations.push(end - start);
+      }
+
+      return {
+        mean: durations.reduce((a, b) => a + b, 0) / durations.length,
+        min: Math.min(...durations),
+        max: Math.max(...durations),
+      };
+    }
+
+    async function benchmarkIndexedDB() {
+      return new Promise((resolve, reject) => {
+        const dbName = 'benchmark-test';
+        const request = indexedDB.open(dbName, 1);
+
+        request.onerror = () => reject(request.error);
+        
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains('test')) {
+            db.createObjectStore('test', { keyPath: 'id' });
+          }
+        };
+
+        request.onsuccess = async (event) => {
+          const db = event.target.result;
+          const durations = [];
+          const iterations = 100;
+
+          for (let i = 0; i < iterations; i++) {
+            const start = performance.now();
+            const tx = db.transaction(['test'], 'readwrite');
+            const store = tx.objectStore('test');
+            store.put({ id: i, data: `test-${i}` });
+            await new Promise(res => tx.oncomplete = res);
+            const end = performance.now();
+            durations.push(end - start);
+          }
+
+          db.close();
+          indexedDB.deleteDatabase(dbName);
+
+          resolve({
+            mean: durations.reduce((a, b) => a + b, 0) / durations.length,
+            min: Math.min(...durations),
+            max: Math.max(...durations),
+          });
+        };
+      });
+    }
+
+    // Run benchmarks
+    runBtn.addEventListener('click', async () => {
+      runBtn.disabled = true;
+      status.className = 'status info active';
+      status.textContent = 'Running benchmarks...';
+      results.innerHTML = '';
+      results.classList.remove('active');
+
+      try {
+        // Array operations
+        status.textContent = 'Testing array operations...';
+        const arrayResults = await benchmarkArrayOperations();
+        
+        // Object creation
+        status.textContent = 'Testing object creation...';
+        const objectResults = await benchmarkObjectCreation();
+        
+        // IndexedDB
+        status.textContent = 'Testing IndexedDB...';
+        const dbResults = await benchmarkIndexedDB();
+
+        // Display results
+        results.innerHTML = `
+          <div class="result-card">
+            <h3>Array Operations</h3>
+            <p>1000 iterations of array creation and reduction</p>
+            <div class="metric">
+              <span>Mean:</span>
+              <span>${arrayResults.mean.toFixed(3)} ms</span>
+            </div>
+            <div class="metric">
+              <span>Min:</span>
+              <span>${arrayResults.min.toFixed(3)} ms</span>
+            </div>
+            <div class="metric">
+              <span>Max:</span>
+              <span>${arrayResults.max.toFixed(3)} ms</span>
+            </div>
+          </div>
+
+          <div class="result-card">
+            <h3>Object Creation</h3>
+            <p>1000 iterations of creating 100 objects</p>
+            <div class="metric">
+              <span>Mean:</span>
+              <span>${objectResults.mean.toFixed(3)} ms</span>
+            </div>
+            <div class="metric">
+              <span>Min:</span>
+              <span>${objectResults.min.toFixed(3)} ms</span>
+            </div>
+            <div class="metric">
+              <span>Max:</span>
+              <span>${objectResults.max.toFixed(3)} ms</span>
+            </div>
+          </div>
+
+          <div class="result-card">
+            <h3>IndexedDB Operations</h3>
+            <p>100 write operations to IndexedDB</p>
+            <div class="metric">
+              <span>Mean:</span>
+              <span>${dbResults.mean.toFixed(3)} ms</span>
+            </div>
+            <div class="metric">
+              <span>Min:</span>
+              <span>${dbResults.min.toFixed(3)} ms</span>
+            </div>
+            <div class="metric">
+              <span>Max:</span>
+              <span>${dbResults.max.toFixed(3)} ms</span>
+            </div>
+          </div>
+        `;
+
+        results.classList.add('active');
+        status.className = 'status success active';
+        status.textContent = '✓ Benchmarks completed successfully!';
+
+      } catch (error) {
+        status.className = 'status error active';
+        status.textContent = `Error: ${error.message}`;
+        console.error('Benchmark error:', error);
+      } finally {
+        runBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
