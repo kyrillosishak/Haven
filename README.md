@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1 style="font-size: 5em; margin: 0.6em 0;">
+<h1 style="font-size: 5em; margin: 0.6em 1;">
   <img src="./assets/logo.png" alt="Haven Logo" height="120" style="vertical-align: middle; margin-right: -20px;"/>
   Haven
 </h1>
